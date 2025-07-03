@@ -3,13 +3,15 @@ A 3d data visualizer of a dynamic computed Goldback Prime Triangle
 
 
 # How to run
-1a) Download or Clone the index.html
-1b) View in browser index.html
+
+- 1a) Download or Clone the index.html
+- 1b) View in browser index.html
 
 or
-2a) https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
-2b) Open above link and save as.
-2c) View in browser index.html
+
+- 2a) https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
+- 2b) Open above link and save as.
+- 2c) View in browser index.html
 
 # Screenshot
 ![image](https://github.com/user-attachments/assets/4b004f22-b84c-4683-9b15-9be211ce4c30)
