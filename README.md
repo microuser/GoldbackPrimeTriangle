@@ -25,6 +25,9 @@ or
 
 
 
+## Inspiration 
+- https://www.youtube.com/watch?v=x32Zq-XvID4
+
 ## Executive Summary
 
 What began as a simple request to visualize Goldbach's conjecture evolved into a comprehensive research project, architectural design challenge, and full-stack implementation. This report documents our journey from mathematical uncertainty to a production-ready interactive visualization tool.
