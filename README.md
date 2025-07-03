@@ -15,6 +15,15 @@ or
 # Screenshot
 ![image](https://github.com/user-attachments/assets/4b004f22-b84c-4683-9b15-9be211ce4c30)
 
+# Known Issues
+ - Initially loads with 1024 side lengths
+ - Changing N makes things odd, but labels re-appear.
+ - Reload the page to reset camera better.
+ - Searching for N causes issues with camera.
+ - A lot more. but this works in your browser, and its a single page to edit and suggest changes. 
+  
+# K  
+
 ## Inspiration 
 - https://www.youtube.com/watch?v=x32Zq-XvID4
 
