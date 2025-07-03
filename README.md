@@ -10,6 +10,8 @@ than 2 can be expressed as the sum of two primes. This calculates the permutatio
 # Screenshot
 ![image](https://github.com/user-attachments/assets/4b004f22-b84c-4683-9b15-9be211ce4c30)
 
+## Inspiration 
+- https://www.youtube.com/watch?v=x32Zq-XvID4
 # See the Code
 
 - 1a) Download or Clone the https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
@@ -26,8 +28,6 @@ than 2 can be expressed as the sum of two primes. This calculates the permutatio
   
 
 
-## Inspiration 
-- https://www.youtube.com/watch?v=x32Zq-XvID4
 
 
 # Laboratory Report: Goldbach Prime Triangle Explorer
