@@ -223,6 +223,16 @@
                 <button id="recalculate-btn" onclick="forceRecalculate()">Recalculate</button>
             </div>
 
+            <div class="control-group">
+                <label for="lod-distance">Detail Level: <span id="lod-value">100</span></label>
+                <input type="range" id="lod-distance" min="50" max="500" value="100" step="25">
+            </div>
+
+            <div class="control-group">
+                <label for="node-size">Node Size: <span id="size-value">1.0</span></label>
+                <input type="range" id="node-size" min="0.1" max="3.0" value="1.0" step="0.1">
+            </div>
+
             <div id="search-container">
                 <label for="search-input">Search Number:</label>
                 <input type="number" id="search-input" placeholder="Enter even number">
