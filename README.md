@@ -6,14 +6,16 @@ than 2 can be expressed as the sum of two primes. This calculates the permutatio
 
 - http://microuser.github.io/GoldbackPrimeTriangle
 
+
+# Screenshot
+![image](https://github.com/user-attachments/assets/4b004f22-b84c-4683-9b15-9be211ce4c30)
+
 # See the Code
 
 - 1a) Download or Clone the https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
 - 2b) Open above link and save as.
 - 2c) View in browser index.html
 
-# Screenshot
-![image](https://github.com/user-attachments/assets/4b004f22-b84c-4683-9b15-9be211ce4c30)
 
 # Known Issues
  - Initially loads with 1024 side lengths
