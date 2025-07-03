@@ -8,6 +8,10 @@ than 2 can be expressed as the sum of two primes. This calculates the permutatio
 
 # How to run
 
+- http://microuser.github.io/GoldbackPrimeTriangle
+
+or
+
 - 1a) Download or Clone the index.html
 - 1b) View in browser index.html
 
