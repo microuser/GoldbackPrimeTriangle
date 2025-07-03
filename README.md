@@ -24,7 +24,7 @@ than 2 can be expressed as the sum of two primes. This calculates the permutatio
  - Searching for N causes issues with camera.
  - A lot more. but this works in your browser, and its a single page to edit and suggest changes. 
   
-# K  
+
 
 ## Inspiration 
 - https://www.youtube.com/watch?v=x32Zq-XvID4
