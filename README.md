@@ -2,27 +2,21 @@
 A prime pair finder to find two primes of an even number. A 3d data visualizer of a dynamic computed Goldback Prime Triangle. Goldbach's Conjecture: Every even integer greater
 than 2 can be expressed as the sum of two primes. This calculates the permutations and shows their Importance as sphere size and allows highlight and detailed inspection to find the prime pairs. 
 
-## Inspiration 
-- https://www.youtube.com/watch?v=x32Zq-XvID4
-
-
 # How to run
 
 - http://microuser.github.io/GoldbackPrimeTriangle
 
 or
 
-- 1a) Download or Clone the index.html
-- 1b) View in browser index.html
-
-or
-
-- 2a) https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
+- 1a) Download or Clone the https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
 - 2b) Open above link and save as.
 - 2c) View in browser index.html
 
 # Screenshot
 ![image](https://github.com/user-attachments/assets/4b004f22-b84c-4683-9b15-9be211ce4c30)
+
+## Inspiration 
+- https://www.youtube.com/watch?v=x32Zq-XvID4
 
 
 # Laboratory Report: Goldbach Prime Triangle Explorer
