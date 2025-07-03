@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goldbach Prime Triangle Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas {
+            display: block;
+            cursor: move;
+        }
+
+        #canvas:active {
+            cursor: move;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 300px;
+            z-index: 100;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 350px;
+            z-index: 100;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            color: #e0e0e0;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:disabled {
+            background: #444;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #stats {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .stat-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .prime-highlight {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .sum-highlight {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 200;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #667eea;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #search-container {
+            margin-bottom: 15px;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            color: #e0e0e0;
+        }
+
+        .highlight-node {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        .recalculating {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Calculating Goldbach Pyramid...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <h3>Goldbach Explorer</h3>
+            
+            <div class="control-group">
+                <label for="max-n">Maximum N: <span id="n-value">1024</span></label>
+                <input type="range" id="max-n" min="10" max="1024" value="1024" step="10">
+                <button id="recalculate-btn" onclick="forceRecalculate()">Recalculate</button>
+            </div>
+
+            <div class="control-group">
+                <label for="lod-distance">Detail Level: <span id="lod-value">100</span></label>
+                <input type="range" id="lod-distance" min="50" max="500" value="100" step="25">
+            </div>
+
+            <div class="control-group">
+                <label for="node-size">Node Size: <span id="size-value">1.0</span></label>
+                <input type="range" id="node-size" min="0.1" max="3.0" value="1.0" step="0.1">
+            </div>
+
+            <div id="search-container">
+                <label for="search-input">Search Number:</label>
+                <input type="number" id="search-input" placeholder="Enter even number">
+                <button onclick="searchNumber()">Find</button>
+            </div>
+
+            <div>
+                <button onclick="resetCamera()">Reset View</button>
+                <button onclick="autoRotate()">Auto Rotate</button>
+                <button onclick="showStats()">Stats</button>
+            </div>
+        </div>
+
+        <div id="info-panel">
+            <h3>Information</h3>
+            <div id="stats">
+                <div class="stat-item">
+                    <strong>Goldbach's Conjecture:</strong> Every even integer greater than 2 can be expressed as the sum of two primes.
+                </div>
+                <div class="stat-item">
+                    <strong>Current N:</strong> <span id="current-n">1024</span>
+                </div>
+                <div class="stat-item">
+                    <strong>Primes loaded:</strong> <span id="prime-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <strong>Valid pairs:</strong> <span id="pair-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <strong>Nodes visible:</strong> <span id="visible-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <strong>Camera position:</strong> <span id="camera-pos">0, 0, 0</span>
+                </div>
+                <div class="stat-item" id="hover-info">
+                    <strong>Hover over nodes to see details</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // OrbitControls implementation with constrained movement
+        class OrbitControls {
+            constructor(camera, domElement) {
+                this.camera = camera;
+                this.domElement = domElement;
+                
+                this.enabled = true;
+                this.target = new THREE.Vector3(0, -15, 0);
+                
+                // Constrain camera to face triangle
+                this.minDistance = 10;
+                this.maxDistance = 100;
+                this.minPolarAngle = Math.PI * 0.2;
+                this.maxPolarAngle = Math.PI * 0.8;
+                this.minAzimuthAngle = -Math.PI * 0.3;
+                this.maxAzimuthAngle = Math.PI * 0.3;
+                
+                this.enableDamping = true;
+                this.dampingFactor = 0.05;
+                this.enableZoom = true;
+                this.zoomSpeed = 1.0;
+                this.enableRotate = false;
+                this.enablePan = true;
+                this.panSpeed = 1.0;
+                this.autoRotate = false;
+                
+                this.spherical = new THREE.Spherical();
+                this.sphericalDelta = new THREE.Spherical();
+                this.scale = 1;
+                this.panOffset = new THREE.Vector3();
+                this.zoomChanged = false;
+                
+                this.panStart = new THREE.Vector2();
+                this.panEnd = new THREE.Vector2();
+                this.panDelta = new THREE.Vector2();
+                
+                this.dollyStart = new THREE.Vector2();
+                this.dollyEnd = new THREE.Vector2();
+                this.dollyDelta = new THREE.Vector2();
+                
+                this.state = 'NONE';
+                this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
+                
+                this.init();
+                this.update();
+            }
+            
+            init() {
+                this.domElement.addEventListener('contextmenu', this.onContextMenu.bind(this), false);
+                this.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+                this.domElement.addEventListener('wheel', this.onMouseWheel.bind(this), false);
+                this.domElement.addEventListener('touchstart', this.onTouchStart.bind(this), false);
+                this.domElement.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+                this.domElement.addEventListener('touchmove', this.onTouchMove.bind(this), false);
+                
+                const offset = new THREE.Vector3();
+                offset.copy(this.camera.position).sub(this.target);
+                this.spherical.setFromVector3(offset);
+            }
+            
+            update() {
+                const offset = new THREE.Vector3();
+                const position = this.camera.position;
+                
+                offset.copy(position).sub(this.target);
+                this.spherical.setFromVector3(offset);
+                
+                this.spherical.theta += this.sphericalDelta.theta;
+                this.spherical.phi += this.sphericalDelta.phi;
+                
+                this.spherical.theta = Math.max(this.minAzimuthAngle, Math.min(this.maxAzimuthAngle, this.spherical.theta));
+                this.spherical.phi = Math.max(this.minPolarAngle, Math.min(this.maxPolarAngle, this.spherical.phi));
+                this.spherical.makeSafe();
+                
+                this.spherical.radius *= this.scale;
+                this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
+                
+                this.target.add(this.panOffset);
+                
+                offset.setFromSpherical(this.spherical);
+                position.copy(this.target).add(offset);
+                
+                this.camera.lookAt(this.target);
+                
+                if (this.enableDamping === true) {
+                    this.sphericalDelta.theta *= (1 - this.dampingFactor);
+                    this.sphericalDelta.phi *= (1 - this.dampingFactor);
+                    this.panOffset.multiplyScalar(1 - this.dampingFactor);
+                } else {
+                    this.sphericalDelta.set(0, 0, 0);
+                    this.panOffset.set(0, 0, 0);
+                }
+                
+                this.scale = 1;
+                
+                if (this.zoomChanged) {
+                    this.zoomChanged = false;
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            panLeft(distance, objectMatrix) {
+                const v = new THREE.Vector3();
+                v.setFromMatrixColumn(objectMatrix, 0);
+                v.multiplyScalar(-distance);
+                this.panOffset.add(v);
+            }
+            
+            panUp(distance, objectMatrix) {
+                const v = new THREE.Vector3();
+                v.setFromMatrixColumn(objectMatrix, 1);
+                v.multiplyScalar(distance);
+                this.panOffset.add(v);
+            }
+            
+            pan(deltaX, deltaY) {
+                const element = this.domElement;
+                const position = this.camera.position;
+                const offset = new THREE.Vector3().copy(position).sub(this.target);
+                let targetDistance = offset.length();
+                
+                targetDistance *= Math.tan((this.camera.fov / 2) * Math.PI / 180.0);
+                
+                this.panLeft(2 * deltaX * targetDistance / element.clientHeight, this.camera.matrix);
+                this.panUp(2 * deltaY * targetDistance / element.clientHeight, this.camera.matrix);
+            }
+            
+            dollyIn(dollyScale) {
+                this.scale /= dollyScale;
+            }
+            
+            dollyOut(dollyScale) {
+                this.scale *= dollyScale;
+            }
+            
+            getZoomScale() {
+                return Math.pow(0.95, this.zoomSpeed);
+            }
+            
+            onMouseDown(event) {
+                if (this.enabled === false) return;
+                
+                event.preventDefault();
+                
+                this.state = 'PAN';
+                this.panStart.set(event.clientX, event.clientY);
+                
+                document.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+                document.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+            }
+            
+            onMouseMove(event) {
+                if (this.enabled === false) return;
+                
+                event.preventDefault();
+                
+                if (this.state === 'PAN') {
+                    this.panEnd.set(event.clientX, event.clientY);
+                    this.panDelta.subVectors(this.panEnd, this.panStart).multiplyScalar(this.panSpeed);
+                    this.pan(this.panDelta.x, this.panDelta.y);
+                    this.panStart.copy(this.panEnd);
+                    this.update();
+                }
+            }
+            
+            onMouseUp(event) {
+                if (this.enabled === false) return;
+                
+                document.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
+                document.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
+                
+                this.state = 'NONE';
+            }
+            
+            onMouseWheel(event) {
+                if (this.enabled === false || this.enableZoom === false) return;
+                
+                event.preventDefault();
+                event.stopPropagation();
+                
+                if (event.deltaY < 0) {
+                    this.dollyOut(this.getZoomScale());
+                } else if (event.deltaY > 0) {
+                    this.dollyIn(this.getZoomScale());
+                }
+                
+                this.update();
+            }
+            
+            onTouchStart(event) {
+                if (this.enabled === false) return;
+                
+                event.preventDefault();
+                
+                switch (event.touches.length) {
+                    case 1:
+                        this.state = 'TOUCH_PAN';
+                        this.panStart.set(event.touches[0].pageX, event.touches[0].pageY);
+                        break;
+                    case 2:
+                        this.state = 'TOUCH_DOLLY';
+                        const dx = event.touches[0].pageX - event.touches[1].pageX;
+                        const dy = event.touches[0].pageY - event.touches[1].pageY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        this.dollyStart.set(0, distance);
+                        break;
+                }
+            }
+            
+            onTouchMove(event) {
+                if (this.enabled === false) return;
+                
+                event.preventDefault();
+                event.stopPropagation();
+                
+                switch (this.state) {
+                    case 'TOUCH_PAN':
+                        this.panEnd.set(event.touches[0].pageX, event.touches[0].pageY);
+                        this.panDelta.subVectors(this.panEnd, this.panStart).multiplyScalar(this.panSpeed);
+                        this.pan(this.panDelta.x, this.panDelta.y);
+                        this.panStart.copy(this.panEnd);
+                        this.update();
+                        break;
+                    case 'TOUCH_DOLLY':
+                        const dx = event.touches[0].pageX - event.touches[1].pageX;
+                        const dy = event.touches[0].pageY - event.touches[1].pageY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        this.dollyEnd.set(0, distance);
+                        this.dollyDelta.set(0, Math.pow(this.dollyEnd.y / this.dollyStart.y, this.zoomSpeed));
+                        this.dollyIn(this.dollyDelta.y);
+                        this.dollyStart.copy(this.dollyEnd);
+                        this.update();
+                        break;
+                }
+            }
+            
+            onTouchEnd(event) {
+                if (this.enabled === false) return;
+                this.state = 'NONE';
+            }
+            
+            onContextMenu(event) {
+                if (this.enabled === false) return;
+                event.preventDefault();
+            }
+        }
+
+        // Global variables
+        let scene, camera, renderer, controls;
+        let pyramidTree, lodManager;
+        let intersectionMeshes = [];
+        let raycaster, mouse;
+        let isAutoRotating = false;
+        let highlightedNodes = [];
+        let hoverHighlightedNodes = []; // New array for hover highlights
+        let isRecalculating = false;
+        let currentN = 1024;
+        let recalculationDebounceTimer = null;
+        let currentHoveredSum = null; // Track currently hovered sum
+
+        // Mathematical classes
+        class PrimeGenerator {
+            constructor(maxN, progressCallback) {
+                this.maxN = maxN;
+                this.primes = [];
+                this.primeSet = new Set();
+                this.progressCallback = progressCallback;
+                this.sieveOfEratosthenes();
+            }
+            
+            sieveOfEratosthenes() {
+                const sieve = new Array(this.maxN + 1).fill(true);
+                sieve[0] = sieve[1] = false;
+                
+                const sqrtN = Math.sqrt(this.maxN);
+                let processed = 0;
+                
+                for (let i = 2; i * i <= this.maxN; i++) {
+                    if (sieve[i]) {
+                        for (let j = i * i; j <= this.maxN; j += i) {
+                            sieve[j] = false;
+                        }
+                    }
+                    
+                    // Update progress during sieve
+                    if (i % 10 === 0 && this.progressCallback) {
+                        const progress = (i / sqrtN) * 50; // First 50% for sieving
+                        this.progressCallback(progress);
+                    }
+                }
+                
+                // Collect primes
+                for (let i = 2; i <= this.maxN; i++) {
+                    if (sieve[i]) {
+                        this.primes.push(i);
+                        this.primeSet.add(i);
+                    }
+                    
+                    // Update progress during collection
+                    if (i % 100 === 0 && this.progressCallback) {
+                        const progress = 50 + (i / this.maxN) * 50; // Second 50% for collection
+                        this.progressCallback(progress);
+                    }
+                }
+                
+                if (this.progressCallback) {
+                    this.progressCallback(100);
+                }
+            }
+            
+            isPrime(n) {
+                return this.primeSet.has(n);
+            }
+            
+            getPrimes() {
+                return this.primes;
+            }
+        }
+
+        class GoldbachPyramidTree {
+            constructor(maxN, progressCallback) {
+                this.maxN = maxN;
+                this.progressCallback = progressCallback;
+                this.primeGen = new PrimeGenerator(maxN, (progress) => {
+                    if (this.progressCallback) {
+                        this.progressCallback(progress * 0.3); // 30% for prime generation
+                    }
+                });
+                this.primes = this.primeGen.getPrimes();
+                this.intersections = new Map();
+                this.goldbachPairs = new Map();
+                this.calculateIntersections();
+            }
+            
+            calculateIntersections() {
+                const positions = [];
+                const colors = [];
+                const scales = [];
+                const metadata = [];
+                
+                // For N=1024, use a much larger triangle to show all primes
+                const totalPrimes = this.primes.length;
+                const maxPrimes = Math.min(totalPrimes, Math.max(20, Math.floor(Math.sqrt(this.maxN / 2))));
+                
+                // Ensure we use all available primes for large N
+                const actualMaxPrimes = this.maxN >= 1024 ? Math.min(totalPrimes, 50) : maxPrimes;
+                
+                let processed = 0;
+                let totalOperations = 0;
+                
+                // Count total operations for progress
+                for (let row = 0; row < actualMaxPrimes; row++) {
+                    totalOperations += row + 1;
+                }
+                
+                for (let row = 0; row < actualMaxPrimes; row++) {
+                    for (let col = 0; col <= row; col++) {
+                        const leftPrime = this.primes[col];
+                        const rightPrime = this.primes[row - col];
+                        
+                        if (leftPrime && rightPrime) {
+                            const sum = leftPrime + rightPrime;
+                            
+                            if (sum % 2 === 0 && sum > 2) {
+                                const key = `${leftPrime}-${rightPrime}`;
+                                const position = this.calculateTrianglePosition(row, col, actualMaxPrimes);
+                                
+                                const intersection = {
+                                    prime1: leftPrime,
+                                    prime2: rightPrime,
+                                    sum,
+                                    position,
+                                    row,
+                                    col,
+                                    importance: this.calculateImportance(leftPrime, rightPrime, sum)
+                                };
+                                
+                                this.intersections.set(key, intersection);
+                                
+                                if (!this.goldbachPairs.has(sum)) {
+                                    this.goldbachPairs.set(sum, []);
+                                }
+                                this.goldbachPairs.get(sum).push({ prime1: leftPrime, prime2: rightPrime });
+                                
+                                positions.push(position.x, position.y, position.z);
+                                
+                                const hue = (sum % 360) / 360;
+                                const saturation = sum <= 20 ? 0.9 : 0.6;
+                                const lightness = sum <= 10 ? 0.7 : 0.5;
+                                const color = new THREE.Color().setHSL(hue, saturation, lightness);
+                                colors.push(color.r, color.g, color.b);
+                                
+                                const scale = Math.max(0.9, Math.min(1.5, intersection.importance * 2)); // Tripled from 0.3 to 0.9
+                                scales.push(scale, scale, scale);
+                                
+                                metadata.push({
+                                    prime1: leftPrime,
+                                    prime2: rightPrime,
+                                    sum,
+                                    key,
+                                    row,
+                                    col,
+                                    index: positions.length / 3 - 1
+                                });
+                            }
+                        }
+                        
+                        processed++;
+                        if (processed % 10 === 0 && this.progressCallback) {
+                            const progress = 30 + (processed / totalOperations) * 70;
+                            this.progressCallback(progress);
+                        }
+                    }
+                }
+                
+                this.renderData = { positions, colors, scales, metadata };
+                this.maxPrimesUsed = actualMaxPrimes;
+                
+                if (this.progressCallback) {
+                    this.progressCallback(100);
+                }
+            }
+            
+            calculateTrianglePosition(row, col, maxPrimes) {
+                // For large N, use more compact spacing to fit more elements
+                const baseSpacing = this.maxN >= 1024 ? 2.5 : 3;
+                const spacing = baseSpacing + (this.maxN / 400); // More moderate growth
+                const height = spacing * 0.8;
+                
+                // X position: center the triangle, with col offset
+                const x = (col - row / 2) * spacing;
+                
+                // Y position: rows go down from top
+                const y = -row * height;
+                
+                // Z position: slight depth variation for visual interest
+                const z = row * 0.1; // Reduced Z spacing for better visibility
+                
+                return { x, y, z };
+            }
+            
+            calculateImportance(prime1, prime2, sum) {
+                const primeImportance = 10 / (prime1 + prime2);
+                const sumImportance = sum <= 50 ? 2 : (sum <= 100 ? 1.5 : 1);
+                const uniqueness = this.goldbachPairs.has(sum) ? 
+                    1 / (this.goldbachPairs.get(sum).length + 1) : 2;
+                
+                return primeImportance * sumImportance * uniqueness;
+            }
+            
+            searchSum(targetSum) {
+                return this.goldbachPairs.get(targetSum) || [];
+            }
+        }
+
+        class LODManager {
+            constructor(camera) {
+                this.camera = camera;
+                this.maxDistance = 100;
+                this.visibleIndices = new Set();
+            }
+            
+            updateVisibility(pyramidTree) {
+                const cameraPos = this.camera.position;
+                this.visibleIndices.clear();
+                
+                pyramidTree.intersections.forEach((intersection, key) => {
+                    const nodePos = new THREE.Vector3(
+                        intersection.position.x,
+                        intersection.position.y,
+                        intersection.position.z
+                    );
+                    
+                    const distance = cameraPos.distanceTo(nodePos);
+                    const shouldShow = distance < this.maxDistance * intersection.importance;
+                    
+                    if (shouldShow) {
+                        const metadata = pyramidTree.renderData.metadata.find(m => m.key === key);
+                        if (metadata) {
+                            this.visibleIndices.add(metadata.index);
+                        }
+                    }
+                });
+                
+                return this.visibleIndices;
+            }
+        }
+
+        // Progress handling
+        function updateProgress(progress) {
+            const progressFill = document.getElementById('progress-fill');
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+        }
+
+        // UI state management
+        function setRecalculatingState(isRecalculating) {
+            const controls = document.getElementById('controls');
+            const recalculateBtn = document.getElementById('recalculate-btn');
+            
+            if (isRecalculating) {
+                controls.classList.add('recalculating');
+                recalculateBtn.disabled = true;
+                recalculateBtn.textContent = 'Calculating...';
+                document.getElementById('loading').classList.remove('hidden');
+            } else {
+                controls.classList.remove('recalculating');
+                recalculateBtn.disabled = false;
+                recalculateBtn.textContent = 'Recalculate';
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // Initialize the application
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 15, 30); // Raised initial camera position
+            camera.lookAt(0, -5, 0); // Less downward looking initially
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('container').appendChild(renderer.domElement);
+            renderer.domElement.id = 'canvas';
+            
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 200;
+            controls.minDistance = 5;
+            controls.target.set(0, -5, 0); // Adjusted initial target
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 50, 50);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            const light1 = new THREE.PointLight(0x667eea, 0.5, 100);
+            light1.position.set(20, 10, 20);
+            scene.add(light1);
+            
+            const light2 = new THREE.PointLight(0xf093fb, 0.3, 100);
+            light2.position.set(-20, 10, -20);
+            scene.add(light2);
+            
+            // Floor
+            const floorGeometry = new THREE.PlaneGeometry(100, 100);
+            const floorMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x1a1a1a,
+                transparent: true,
+                opacity: 0.1
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -5;
+            floor.receiveShadow = true;
+            scene.add(floor);
+            
+            // Skybox
+            const skyGeometry = new THREE.SphereGeometry(300, 32, 32);
+            const skyMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0f0f23,
+                side: THREE.BackSide
+            });
+            const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+            scene.add(sky);
+            
+            // Raycaster for mouse interaction
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('click', onMouseClick);
+            
+            // Control event listeners with debouncing
+            document.getElementById('max-n').addEventListener('input', debounce(onMaxNChange, 500));
+            document.getElementById('lod-distance').addEventListener('input', onLODChange);
+            document.getElementById('node-size').addEventListener('input', onNodeSizeChange);
+            
+            // Initialize with N=1024
+            generatePyramid(1024);
+        }
+
+        // Debounce function to prevent excessive recalculation
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Enhanced pyramid generation with better progress tracking
+        function generatePyramid(maxN) {
+            if (isRecalculating) {
+                console.log('Already recalculating, skipping...');
+                return;
+            }
+            
+            isRecalculating = true;
+            currentN = maxN;
+            setRecalculatingState(true);
+            
+            // Clear existing meshes
+            clearScene();
+            
+            // Generate pyramid data with progress tracking
+            setTimeout(() => {
+                try {
+                    pyramidTree = new GoldbachPyramidTree(maxN, updateProgress);
+                    lodManager = new LODManager(camera);
+                    
+                    createVisualization();
+                    updateStats();
+                    
+                    console.log(`Pyramid generated for N=${maxN} with ${pyramidTree.intersections.size} intersections`);
+                } catch (error) {
+                    console.error('Error generating pyramid:', error);
+                    alert('Error generating pyramid. Please try with a smaller N value.');
+                } finally {
+                    isRecalculating = false;
+                    setRecalculatingState(false);
+                }
+            }, 100);
+        }
+
+        // Clear scene function
+        function clearScene() {
+            // Remove all intersection meshes
+            intersectionMeshes.forEach(mesh => {
+                scene.remove(mesh);
+                if (mesh.geometry) mesh.geometry.dispose();
+                if (mesh.material) {
+                    if (Array.isArray(mesh.material)) {
+                        mesh.material.forEach(mat => mat.dispose());
+                    } else {
+                        mesh.material.dispose();
+                    }
+                }
+            });
+            intersectionMeshes = [];
+            
+            // Clear both types of highlights
+            clearHighlights();
+            clearHoverHighlights();
+            
+            // Reset hover state
+            currentHoveredSum = null;
+            
+            // Reset hover info
+            document.getElementById('hover-info').innerHTML = '<strong>Hover over nodes to see details</strong>';
+        }
+
+        function createVisualization() {
+            const { positions, colors, scales, metadata } = pyramidTree.renderData;
+            
+            if (positions.length === 0) {
+                console.warn('No positions to render');
+                return;
+            }
+            
+            // Create instanced mesh for performance
+            const nodeGeometry = new THREE.SphereGeometry(1.5, 8, 6); // Tripled from 0.5 to 1.5
+            const nodeMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffff,
+                shininess: 100
+            });
+            
+            const instancedMesh = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, positions.length / 3);
+            instancedMesh.castShadow = true;
+            instancedMesh.receiveShadow = true;
+            
+            const matrix = new THREE.Matrix4();
+            const color = new THREE.Color();
+            
+            for (let i = 0; i < positions.length / 3; i++) {
+                const x = positions[i * 3];
+                const y = positions[i * 3 + 1];
+                const z = positions[i * 3 + 2];
+                
+                const scaleX = scales[i * 3];
+                const scaleY = scales[i * 3 + 1];
+                const scaleZ = scales[i * 3 + 2];
+                
+                matrix.makeScale(scaleX, scaleY, scaleZ);
+                matrix.setPosition(x, y, z);
+                instancedMesh.setMatrixAt(i, matrix);
+                
+                color.setRGB(colors[i * 3], colors[i * 3 + 1], colors[i * 3 + 2]);
+                instancedMesh.setColorAt(i, color);
+            }
+            
+            instancedMesh.userData = { metadata };
+            scene.add(instancedMesh);
+            intersectionMeshes.push(instancedMesh);
+            
+            // Add grid lines and labels
+            createGridLines();
+            createAxisLabels();
+            
+            console.log(`Visualization created with ${positions.length / 3} nodes`);
+        }
+
+        function createGridLines() {
+            if (!pyramidTree) return;
+            
+            const primes = pyramidTree.primes;
+            const maxPrimes = pyramidTree.maxPrimesUsed;
+            
+            const gridGeometry = new THREE.BufferGeometry();
+            const gridPositions = [];
+            const gridColors = [];
+            
+            // Use dynamic spacing that matches triangle positioning
+            const baseSpacing = pyramidTree.maxN >= 1024 ? 2.5 : 3;
+            const spacing = baseSpacing + (pyramidTree.maxN / 400);
+            const height = spacing * 0.8;
+            
+            const triangleHeight = (maxPrimes - 1) * height;
+            const triangleWidth = (maxPrimes - 1) * spacing;
+            
+            // Triangle edges
+            gridPositions.push(-triangleWidth / 2, 0, 0);
+            gridPositions.push(0, -triangleHeight, 0);
+            gridColors.push(0.8, 0.8, 0.8);
+            gridColors.push(0.8, 0.8, 0.8);
+            
+            gridPositions.push(triangleWidth / 2, 0, 0);
+            gridPositions.push(0, -triangleHeight, 0);
+            gridColors.push(0.8, 0.8, 0.8);
+            gridColors.push(0.8, 0.8, 0.8);
+            
+            gridPositions.push(-triangleWidth / 2, 0, 0);
+            gridPositions.push(triangleWidth / 2, 0, 0);
+            gridColors.push(0.8, 0.8, 0.8);
+            gridColors.push(0.8, 0.8, 0.8);
+            
+            // For large triangles, reduce grid line density
+            const gridStep = pyramidTree.maxN >= 1024 ? 2 : 1;
+            
+            // Horizontal lines
+            for (let row = 0; row < maxPrimes; row += gridStep) {
+                const y = -row * height;
+                const rowWidth = row * spacing;
+                
+                if (row > 0) {
+                    gridPositions.push(-rowWidth / 2, y, 0);
+                    gridPositions.push(rowWidth / 2, y, 0);
+                    gridColors.push(0.4, 0.4, 0.6);
+                    gridColors.push(0.4, 0.4, 0.6);
+                }
+            }
+            
+            // Diagonal lines (less dense for large triangles)
+            for (let i = 0; i < maxPrimes; i += gridStep) {
+                // Left diagonals
+                const startX = -i * spacing / 2;
+                const endX = startX - (maxPrimes - 1 - i) * spacing / 2;
+                const endY = -(maxPrimes - 1) * height;
+                
+                gridPositions.push(startX, 0, 0);
+                gridPositions.push(endX, endY, 0);
+                gridColors.push(0.6, 0.4, 0.4);
+                gridColors.push(0.6, 0.4, 0.4);
+                
+                // Right diagonals
+                const startX2 = i * spacing / 2;
+                const endX2 = startX2 + (maxPrimes - 1 - i) * spacing / 2;
+                
+                gridPositions.push(startX2, 0, 0);
+                gridPositions.push(endX2, endY, 0);
+                gridColors.push(0.4, 0.6, 0.4);
+                gridColors.push(0.4, 0.6, 0.4);
+            }
+            
+            gridGeometry.setAttribute('position', new THREE.Float32BufferAttribute(gridPositions, 3));
+            gridGeometry.setAttribute('color', new THREE.Float32BufferAttribute(gridColors, 3));
+            
+            const gridMaterial = new THREE.LineBasicMaterial({ 
+                vertexColors: true,
+                transparent: true,
+                opacity: pyramidTree.maxN >= 1024 ? 0.3 : 0.6 // Less opacity for large triangles
+            });
+            
+            const gridLines = new THREE.LineSegments(gridGeometry, gridMaterial);
+            scene.add(gridLines);
+            intersectionMeshes.push(gridLines);
+        }
+        
+        function createAxisLabels() {
+            if (!pyramidTree) return;
+            createGeometricLabels();
+        }
+        
+        function createPixelText(text, size = 1, color = 0xffffff) {
+            const textGroup = new THREE.Group();
+            const cubeSize = 0.2 * size;
+            const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const cubeMaterial = new THREE.MeshBasicMaterial({ color: color });
+            
+            const digitPatterns = {
+                '0': [[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+                '1': [[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],
+                '2': [[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],
+                '3': [[1,1,1],[0,0,1],[1,1,1],[0,0,1],[1,1,1]],
+                '4': [[1,0,1],[1,0,1],[1,1,1],[0,0,1],[0,0,1]],
+                '5': [[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+                '6': [[1,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+                '7': [[1,1,1],[0,0,1],[0,0,1],[0,0,1],[0,0,1]],
+                '8': [[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],
+                '9': [[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,1]]
+            };
+            
+            let currentX = 0;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const pattern = digitPatterns[char];
+                
+                if (pattern) {
+                    for (let row = 0; row < pattern.length; row++) {
+                        for (let col = 0; col < pattern[row].length; col++) {
+                            if (pattern[row][col] === 1) {
+                                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                                cube.position.set(
+                                    currentX + col * cubeSize * 1.2,
+                                    -(row * cubeSize * 1.2),
+                                    0
+                                );
+                                textGroup.add(cube);
+                            }
+                        }
+                    }
+                    currentX += 4 * cubeSize;
+                }
+            }
+            
+            return textGroup;
+        }
+        
+        function createGeometricLabels() {
+            if (!pyramidTree) return;
+            
+            const primes = pyramidTree.primes;
+            const maxPrimes = pyramidTree.maxPrimesUsed;
+            
+            // Use dynamic spacing that matches triangle positioning
+            const baseSpacing = pyramidTree.maxN >= 1024 ? 2.5 : 3;
+            const spacing = baseSpacing + (pyramidTree.maxN / 400);
+            const height = spacing * 0.8;
+            
+            // For N=1024, show all primes used in the triangle
+            const labelsToShow = Math.min(maxPrimes, pyramidTree.maxN >= 1024 ? maxPrimes : 25);
+            
+            // Create prime labels along triangle edges
+            for (let i = 0; i < labelsToShow; i++) {
+                const prime = primes[i];
+                
+                // Left edge labels (red) - show ALL primes for large N
+                const leftX = -i * spacing / 2 - spacing * 1.5;
+                const leftY = -i * height;
+                
+                // Smaller text for large triangles
+                const labelSize = pyramidTree.maxN >= 1024 ? 0.5 : 0.8;
+                const leftText = createPixelText(prime.toString(), labelSize, 0xff6666);
+                leftText.position.set(leftX, leftY, 1);
+                scene.add(leftText);
+                intersectionMeshes.push(leftText);
+                
+                // Right edge labels (blue) - show ALL primes for large N
+                const rightX = i * spacing / 2 + spacing * 1.5;
+                const rightY = -i * height;
+                
+                const rightText = createPixelText(prime.toString(), labelSize, 0x6666ff);
+                rightText.position.set(rightX, rightY, 1);
+                scene.add(rightText);
+                intersectionMeshes.push(rightText);
+            }
+            
+            // Create individual sum labels for spheres (but smaller for large N)
+            const sumLabelSize = pyramidTree.maxN >= 1024 ? 0.3 : Math.max(0.3, Math.min(0.8, 1.0 - (pyramidTree.maxN / 1000)));
+            
+            // For large N, only show sum labels for smaller sums to avoid clutter
+            const showSumLabels = pyramidTree.maxN >= 1024 ? false : true;
+            
+            if (showSumLabels) {
+                pyramidTree.intersections.forEach((intersection, key) => {
+                    const sum = intersection.sum;
+                    
+                    // Create sum label above each sphere
+                    const sumText = createPixelText(sum.toString(), sumLabelSize, 0xffff88);
+                    sumText.position.set(
+                        intersection.position.x,
+                        intersection.position.y + spacing * 0.8,
+                        intersection.position.z + 0.5
+                    );
+                    scene.add(sumText);
+                    intersectionMeshes.push(sumText);
+                });
+            }
+            
+            // Create title with dynamic positioning
+            const titleSize = pyramidTree.maxN >= 1024 ? 1.2 : Math.max(1.0, Math.min(2.0, 1.5 - (pyramidTree.maxN / 1000)));
+            const titleText = createPixelText("GOLDBACH", titleSize, 0x88ff88);
+            titleText.position.set(-spacing * 4, spacing * 2, 0);
+            scene.add(titleText);
+            intersectionMeshes.push(titleText);
+            
+            // Create N value indicator
+            const nText = createPixelText(`N=${pyramidTree.maxN}`, titleSize * 0.7, 0xffffff);
+            nText.position.set(-spacing * 4, spacing * 3.5, 0);
+            scene.add(nText);
+            intersectionMeshes.push(nText);
+            
+            // Create prime count indicator for large N
+            if (pyramidTree.maxN >= 1024) {
+                const primeCountText = createPixelText(`${labelsToShow} PRIMES`, titleSize * 0.6, 0xcccccc);
+                primeCountText.position.set(-spacing * 4, spacing * 5, 0);
+                scene.add(primeCountText);
+                intersectionMeshes.push(primeCountText);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(intersectionMeshes.filter(m => m.isInstancedMesh));
+            
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const instanceId = intersect.instanceId;
+                
+                if (instanceId !== undefined && intersect.object.userData.metadata) {
+                    const metadata = intersect.object.userData.metadata[instanceId];
+                    if (metadata) {
+                        // Only create new hover highlights if we're hovering over a different sum
+                        if (currentHoveredSum !== metadata.sum) {
+                            currentHoveredSum = metadata.sum;
+                            createHoverHighlights(metadata.sum);
+                        }
+                        updateHoverInfo(metadata);
+                    }
+                }
+            } else {
+                // Clear hover highlights when not hovering over anything
+                if (currentHoveredSum !== null) {
+                    clearHoverHighlights();
+                    currentHoveredSum = null;
+                }
+                document.getElementById('hover-info').innerHTML = '<strong>Hover over nodes to see details</strong>';
+            }
+        }
+
+        function onMouseClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(intersectionMeshes.filter(m => m.isInstancedMesh));
+            
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const instanceId = intersect.instanceId;
+                
+                if (instanceId !== undefined && intersect.object.userData.metadata) {
+                    const metadata = intersect.object.userData.metadata[instanceId];
+                    if (metadata) {
+                        showNodeDetails(metadata);
+                    }
+                }
+            }
+        }
+
+        function updateHoverInfo(metadata) {
+            const pairs = pyramidTree.searchSum(metadata.sum);
+            const pairText = pairs.map(p => `${p.prime1} + ${p.prime2}`).join(', ');
+            
+            document.getElementById('hover-info').innerHTML = `
+                <strong>Sum:</strong> <span class="sum-highlight">${metadata.sum}</span><br>
+                <strong>This pair:</strong> <span class="prime-highlight">${metadata.prime1} + ${metadata.prime2}</span><br>
+                <strong>All pairs:</strong> ${pairText}<br>
+                <strong>Representations:</strong> ${pairs.length}<br>
+                <strong>Hover highlights:</strong> <span style="color: #00ff44;">${pairs.length} green spheres</span>
+            `;
+        }
+
+        function showNodeDetails(metadata) {
+            const pairs = pyramidTree.searchSum(metadata.sum);
+            console.log(`Clicked on sum ${metadata.sum}:`, pairs);
+            highlightSum(metadata.sum);
+        }
+
+        function createHoverHighlights(targetSum) {
+            // Clear previous hover highlights
+            clearHoverHighlights();
+            
+            // Find all nodes with this sum
+            const matchingNodes = [];
+            pyramidTree.intersections.forEach((intersection, key) => {
+                if (intersection.sum === targetSum) {
+                    matchingNodes.push(intersection);
+                }
+            });
+            
+            // Create green neon transparent highlight spheres
+            matchingNodes.forEach(node => {
+                const highlightGeometry = new THREE.SphereGeometry(3.6, 16, 12); // Tripled from 1.2 to 3.6
+                const highlightMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x00ff44,
+                    transparent: true,
+                    opacity: 0.4,
+                    side: THREE.DoubleSide
+                });
+                
+                const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
+                highlightMesh.position.set(node.position.x, node.position.y, node.position.z);
+                highlightMesh.userData.isHoverHighlight = true;
+                highlightMesh.userData.targetSum = targetSum;
+                
+                scene.add(highlightMesh);
+                hoverHighlightedNodes.push(highlightMesh);
+            });
+            
+            console.log(`Hover highlighted ${matchingNodes.length} nodes for sum ${targetSum}`);
+        }
+
+        function highlightSum(targetSum) {
+            clearHighlights();
+            
+            const matchingNodes = [];
+            pyramidTree.intersections.forEach((intersection, key) => {
+                if (intersection.sum === targetSum) {
+                    matchingNodes.push(intersection);
+                }
+            });
+            
+            matchingNodes.forEach(node => {
+                const highlightGeometry = new THREE.SphereGeometry(3.0, 16, 12); // Tripled from 1.0 to 3.0
+                const highlightMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffff00,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
+                highlightMesh.position.set(node.position.x, node.position.y, node.position.z);
+                highlightMesh.userData.isHighlight = true;
+                
+                scene.add(highlightMesh);
+                highlightedNodes.push(highlightMesh);
+            });
+            
+            console.log(`Highlighted ${matchingNodes.length} nodes for sum ${targetSum}`);
+        }
+
+        function clearHighlights() {
+            highlightedNodes.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            highlightedNodes = [];
+        }
+
+        function clearHoverHighlights() {
+            hoverHighlightedNodes.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            hoverHighlightedNodes = [];
+        }
+
+        function clearHighlights() {
+            highlightedNodes.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            highlightedNodes = [];
+        }
+
+        function updateStats() {
+            if (!pyramidTree) return;
+            
+            document.getElementById('current-n').textContent = currentN;
+            document.getElementById('prime-count').textContent = pyramidTree.primes.length;
+            document.getElementById('pair-count').textContent = pyramidTree.intersections.size;
+            document.getElementById('visible-count').textContent = intersectionMeshes.length;
+            
+            const pos = camera.position;
+            document.getElementById('camera-pos').textContent = 
+                `${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}`;
+        }
+
+        // Enhanced control functions
+        function onMaxNChange(event) {
+            const value = parseInt(event.target.value);
+            document.getElementById('n-value').textContent = value;
+            
+            // Only regenerate if value has actually changed
+            if (value !== currentN) {
+                console.log(`N changed from ${currentN} to ${value}, regenerating...`);
+                generatePyramid(value);
+            }
+        }
+
+        function onLODChange(event) {
+            const value = parseInt(event.target.value);
+            document.getElementById('lod-value').textContent = value;
+            if (lodManager) {
+                lodManager.maxDistance = value;
+            }
+        }
+
+        function onNodeSizeChange(event) {
+            const value = parseFloat(event.target.value);
+            document.getElementById('size-value').textContent = value;
+            
+            intersectionMeshes.forEach(mesh => {
+                if (mesh.isInstancedMesh) {
+                    mesh.scale.setScalar(value);
+                }
+            });
+        }
+
+        function resetCamera() {
+            if (!pyramidTree) return;
+            
+            // Calculate dynamic camera positioning based on triangle size
+            const baseSpacing = 3;
+            const spacing = baseSpacing + (pyramidTree.maxN / 200);
+            const triangleHeight = (pyramidTree.maxPrimesUsed - 1) * spacing * 0.8;
+            
+            // Position camera more horizontally - less downward looking
+            const cameraDistance = Math.max(30, triangleHeight * 1.5);
+            const cameraY = Math.max(15, triangleHeight * 0.3); // Raised camera Y position
+            
+            camera.position.set(0, cameraY, cameraDistance);
+            camera.lookAt(0, -triangleHeight * 0.3, 0); // Look point raised up
+            controls.target.set(0, -triangleHeight * 0.3, 0);
+            controls.update();
+        }
+
+        function autoRotate() {
+            isAutoRotating = !isAutoRotating;
+            controls.autoRotate = isAutoRotating;
+        }
+
+        function showStats() {
+            if (!pyramidTree) return;
+            
+            const stats = {
+                primes: pyramidTree.primes.length,
+                pairs: pyramidTree.intersections.size,
+                maxSum: Math.max(...Array.from(pyramidTree.goldbachPairs.keys())),
+                avgRepresentations: Array.from(pyramidTree.goldbachPairs.values()).reduce((sum, arr) => sum + arr.length, 0) / pyramidTree.goldbachPairs.size
+            };
+            
+            console.log('Pyramid Statistics:', stats);
+            alert(`Pyramid Statistics:
+Primes: ${stats.primes}
+Valid pairs: ${stats.pairs}
+Maximum sum: ${stats.maxSum}
+Average representations: ${stats.avgRepresentations.toFixed(2)}`);
+        }
+
+        // Force recalculation function
+        function forceRecalculate() {
+            const currentValue = parseInt(document.getElementById('max-n').value);
+            console.log(`Force recalculating with N=${currentValue}`);
+            
+            // Clear current data and force regeneration
+            currentN = -1; // Force regeneration by making it different
+            generatePyramid(currentValue);
+        }
+
+        function searchNumber() {
+            const input = document.getElementById('search-input');
+            const targetSum = parseInt(input.value);
+            
+            if (isNaN(targetSum) || targetSum <= 2 || targetSum % 2 !== 0) {
+                alert('Please enter an even number greater than 2');
+                return;
+            }
+            
+            if (!pyramidTree) {
+                alert('Please wait for the pyramid to be generated first');
+                return;
+            }
+            
+            const pairs = pyramidTree.searchSum(targetSum);
+            if (pairs.length === 0) {
+                alert(`No prime pairs found for sum ${targetSum}.\n\nThis could mean:\n- The sum is outside the current prime range (N=${pyramidTree.maxN})\n- The sum requires primes not visible in the current triangle size\n- Try increasing N to include more primes`);
+                return;
+            }
+            
+            const pairText = pairs.map(p => `${p.prime1} + ${p.prime2}`).join('\n');
+            alert(`Found ${pairs.length} representation(s) for ${targetSum}:\n${pairText}`);
+            
+            highlightSum(targetSum);
+            
+            // Move camera to focus on the first highlighted node
+            if (pairs.length > 0) {
+                const firstPair = pairs[0];
+                const intersection = Array.from(pyramidTree.intersections.values()).find(
+                    i => i.sum === targetSum && i.prime1 === firstPair.prime1 && i.prime2 === firstPair.prime2
+                );
+                
+                if (intersection) {
+                    // Calculate dynamic camera positioning based on triangle size
+                    const baseSpacing = 3;
+                    const spacing = baseSpacing + (pyramidTree.maxN / 200);
+                    const cameraDistance = spacing * 8;
+                    
+                    camera.position.set(
+                        intersection.position.x + cameraDistance,
+                        intersection.position.y + cameraDistance * 0.5,
+                        intersection.position.z + cameraDistance
+                    );
+                    camera.lookAt(intersection.position.x, intersection.position.y, intersection.position.z);
+                    controls.target.set(intersection.position.x, intersection.position.y, intersection.position.z);
+                    controls.update();
+                }
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            updateStats();
+            
+            // Animate click-highlighted nodes (yellow)
+            highlightedNodes.forEach(mesh => {
+                mesh.rotation.x += 0.02;
+                mesh.rotation.y += 0.02;
+                mesh.scale.setScalar(1 + 0.3 * Math.sin(Date.now() * 0.005));
+            });
+            
+            // Animate hover-highlighted nodes (green neon pulsing)
+            hoverHighlightedNodes.forEach(mesh => {
+                mesh.rotation.x += 0.015;
+                mesh.rotation.y += 0.015;
+                mesh.rotation.z += 0.01;
+                
+                // Pulsing effect with breathing opacity and scale
+                const time = Date.now() * 0.008;
+                const pulseScale = 1 + 0.4 * Math.sin(time);
+                const pulseOpacity = 0.2 + 0.4 * Math.sin(time * 1.5);
+                
+                mesh.scale.setScalar(pulseScale);
+                mesh.material.opacity = pulseOpacity;
+                
+                // Add a subtle glow effect by varying the color intensity
+                const glowIntensity = 0.7 + 0.3 * Math.sin(time * 2);
+                mesh.material.color.setHSL(0.3, 1, glowIntensity);
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // Initialize and start
+        init();
+        animate();
+    </script>
+</body>
+</html>
