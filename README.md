@@ -7,7 +7,9 @@ A 3d data visualizer of a dynamic computed Goldback Prime Triangle
 1b) View in browser index.html
 
 or
-2) https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
+2a) https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
+2b) Open above link and save as.
+2c) View in browser index.html
 
 
 
