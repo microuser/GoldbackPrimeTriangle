@@ -2,6 +2,15 @@
 A 3d data visualizer of a dynamic computed Goldback Prime Triangle
 
 
+# How to run
+1a) Download or Clone the index.html
+1b) View in browser index.html
+
+or
+2) https://raw.githubusercontent.com/microuser/GoldbackPrimeTriangle/refs/heads/main/index.html
+
+
+
 # Laboratory Report: Goldbach Prime Triangle Explorer
 ## A Journey from Mathematical Theory to Interactive Visualization
 
@@ -11,6 +20,8 @@ A 3d data visualizer of a dynamic computed Goldback Prime Triangle
 **Research Sources:** 250+ mathematical papers, implementations, and theoretical frameworks  
 
 ---
+
+
 
 ## Executive Summary
 
